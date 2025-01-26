@@ -43,7 +43,7 @@ function Login() {
       className="w-full h-screen flex items-center justify-center bg-cover bg-center" 
       style={{
         backgroundImage: `url(${bgimage})`,
-        backgroundColor: 'rgba(4, 15, 2, 0.5)', // Green with 50% opacity
+        backgroundColor: 'rgba(5, 7, 5, 0.5)', // Green with 50% opacity
         backgroundBlendMode: 'overlay'
       }}
     >
