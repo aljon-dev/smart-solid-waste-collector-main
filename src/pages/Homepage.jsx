@@ -4,6 +4,7 @@ import Dashboard from "../components/Dashboard";
 import Announcement from "../components/Announcement";
 import Schedule from "../components/Schedule";
 import Feedback from "../components/Feedback";
+import Notifications from "../components/Notifications"; // Import the static Notifications component
 import {
   CalendarIcon,
   ChatBubbleLeftIcon,
@@ -75,111 +76,6 @@ function Homepage() {
     }
   );
 
-  useEffect(() => {
-    const query = getSchedules();
-  
-    const unsub = onSnapshot(query, (snapshot) => {
-      if (!snapshot || snapshot.empty) {
-        setSchedules({ fetchState: snapshot ? 2 : -1 });
-        return;
-      }
-  
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-  
-      setSchedules({ fetchState: 1, data });
-    });
-  
-    return unsub;
-  }, []);
-
-
-
-  useEffect(() => {
-    const query = getFeedbacks();
-
-    try {
-      const unsub = onSnapshot(query, (snapshot) => {
-        if (!snapshot) {
-          setFeedbacks({ fetchState: -1 });
-          return;
-        }
-
-        if (snapshot.empty) {
-          setFeedbacks({ fetchState: 2 });
-          return;
-        }
-
-        var data = snapshot.docs.map((doc, index) => {
-          var temp = doc.data();
-          temp["no"] = index + 1;
-          temp["id"] = doc.id;
-
-          if (differenceInSeconds(new Date(), temp["postedAt"].toDate()) <= 5) {
-            dispatch(
-              show({
-                type: "info",
-                message: "New feedback has been posted.",
-                duration: 5000,
-                show: true,
-              })
-            );
-          }
-
-          return temp;
-        });
-
-        setFeedbacks({
-          fetchState: 1,
-          data: data,
-        });
-      });
-
-      return () => {
-        unsub();
-      };
-    } catch {
-      setFeedbacks({ fetchState: -1 });
-    }
-  }, []);
-
-  useEffect(() => {
-    const query = getLocations();
-
-    try {
-      const unsub = onSnapshot(query, (snapshot) => {
-        if (!snapshot) {
-          setLocations({ fetchState: -1 });
-          return;
-        }
-
-        if (snapshot.empty) {
-          setLocations({ fetchState: 2 });
-          return;
-        }
-
-        var data = snapshot.docs.map((doc) => {
-          var temp = doc.data();
-          temp["id"] = doc.id;
-          return temp;
-        });
-
-        setLocations({
-          fetchState: 1,
-          data: data,
-        });
-      });
-
-      return () => {
-        unsub();
-      };
-    } catch {
-      setLocations({ fetchState: -1 });
-    }
-  }, []);
-
   const screens = [
     {
       label: "Dashboard",
@@ -214,6 +110,12 @@ function Homepage() {
       icon: <ChatBubbleLeftIcon />,
       header: "Residents Feedback",
     },
+    {
+      label: "Notifications",
+      component: <Notifications />, // Static Notifications component
+      icon: <CalendarIcon />,
+      header: "Notifications",
+    },
   ];
 
   return (
@@ -243,7 +145,6 @@ function Homepage() {
       )}
     </div>
   );
-  s;
 }
 
 export default Homepage;
