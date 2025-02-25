@@ -59,11 +59,7 @@ function Notifications() {
     <div className="w-full h-full bg-white rounded-lg">
       <div className="flex justify-between items-center p-4 pb-0">
         <h2 className="text-xl font-inter-bold text-gray-800">Notifications</h2>
-        <button
-          className="w-[150px] bg-[#19AF0C] h-10 rounded-lg font-inter-bold text-white"
-        >
-          Create
-        </button>
+        
       </div>
       
       <div className="w-full h-full p-4 flex flex-col">
