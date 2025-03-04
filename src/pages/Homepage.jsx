@@ -4,7 +4,7 @@ import Dashboard from "../components/Dashboard";
 import Announcement from "../components/Announcement";
 import Schedule from "../components/Schedule";
 import Feedback from "../components/Feedback";
-import Notifications from "../components/Notifications"; // Import the static Notifications component
+import Notifications from "../components/Notifications";
 import {
   CalendarIcon,
   ChatBubbleLeftIcon,
@@ -76,6 +76,173 @@ function Homepage() {
     }
   );
 
+  useEffect(() => {
+    const query = getSchedules();
+
+    try {
+      const unsub = onSnapshot(query, (snapshot) => {
+        if (!snapshot) {
+          setSchedules({ fetchState: -1 });
+          return;
+        }
+
+        if (snapshot.empty) {
+          setSchedules({ fetchState: 2 });
+          return;
+        }
+
+        var data = snapshot.docs.map((doc, index) => {
+          var temp = doc.data();
+          temp["no"] = index + 1;
+          temp["id"] = doc.id;
+          return temp;
+        });
+
+        const group = data.reduce((group, sched) => {
+          const { locId } = sched;
+
+          group[locId] = group[locId] ?? [];
+          group[locId].push(sched);
+          return group;
+        }, {});
+
+        setSchedules({
+          fetchState: 1,
+          data: data,
+          group: group,
+        });
+      });
+
+      return () => {
+        unsub();
+      };
+    } catch {
+      setSchedules({ fetchState: -1 });
+    }
+  }, []);
+
+  useEffect(() => {
+    const query = getAnnouncements();
+
+    try {
+      const unsub = onSnapshot(query, (snapshot) => {
+        if (!snapshot) {
+          setAnnouncements({ fetchState: -1 });
+          return;
+        }
+
+        if (snapshot.empty) {
+          setAnnouncements({ fetchState: 2 });
+          return;
+        }
+
+        var data = snapshot.docs
+          .map((doc) => {
+            var temp = doc.data();
+            temp["id"] = doc.id;
+            return temp;
+          })
+          .sort(function (a, b) {
+            return b.postedAt - a.postedAt;
+          });
+
+        setAnnouncements({
+          fetchState: 1,
+          data: data,
+        });
+      });
+
+      return () => {
+        unsub();
+      };
+    } catch {
+      setAnnouncements({ fetchState: -1 });
+    }
+  }, []);
+
+  useEffect(() => {
+    const query = getFeedbacks();
+
+    try {
+      const unsub = onSnapshot(query, (snapshot) => {
+        if (!snapshot) {
+          setFeedbacks({ fetchState: -1 });
+          return;
+        }
+
+        if (snapshot.empty) {
+          setFeedbacks({ fetchState: 2 });
+          return;
+        }
+
+        var data = snapshot.docs.map((doc, index) => {
+          var temp = doc.data();
+          temp["no"] = index + 1;
+          temp["id"] = doc.id;
+
+          if (differenceInSeconds(new Date(), temp["postedAt"].toDate()) <= 5) {
+            dispatch(
+              show({
+                type: "info",
+                message: "New feedback has been posted.",
+                duration: 5000,
+                show: true,
+              })
+            );
+          }
+
+          return temp;
+        });
+
+        setFeedbacks({
+          fetchState: 1,
+          data: data,
+        });
+      });
+
+      return () => {
+        unsub();
+      };
+    } catch {
+      setFeedbacks({ fetchState: -1 });
+    }
+  }, []);
+
+  useEffect(() => {
+    const query = getLocations();
+
+    try {
+      const unsub = onSnapshot(query, (snapshot) => {
+        if (!snapshot) {
+          setLocations({ fetchState: -1 });
+          return;
+        }
+
+        if (snapshot.empty) {
+          setLocations({ fetchState: 2 });
+          return;
+        }
+
+        var data = snapshot.docs.map((doc) => {
+          var temp = doc.data();
+          temp["id"] = doc.id;
+          return temp;
+        });
+
+        setLocations({
+          fetchState: 1,
+          data: data,
+        });
+      });
+
+      return () => {
+        unsub();
+      };
+    } catch {
+      setLocations({ fetchState: -1 });
+    }
+  }, []);
+
   const screens = [
     {
       label: "Dashboard",
@@ -97,7 +264,7 @@ function Homepage() {
           isAddSched={isAddSched}
           locations={locations}
           close={() => {
-            setAddSched(true);
+            setAddSched(false);
           }}
         />
       ),
@@ -110,16 +277,17 @@ function Homepage() {
       icon: <ChatBubbleLeftIcon />,
       header: "Residents Feedback",
     },
+
     {
       label: "Notifications",
-      component: <Notifications />, // Static Notifications component
+      component: <Notifications/>, 
       icon: <CalendarIcon />,
       header: "Notifications",
     },
   ];
 
   return (
-    <div className="w-full bg-white h-screen flex flex-row font-inter text-[#F2F2F2] overflow-hidden">
+    <div className="w-full h-screen flex flex-row font-inter text-[#F2F2F2] overflow-hidden">
       <Sidebar screens={screens} screen={screen} setScreen={setScreen} />
       <div className="flex-1 h-full flex flex-col p-4 gap-4">
         <Navbar
@@ -145,6 +313,7 @@ function Homepage() {
       )}
     </div>
   );
+  s;
 }
 
 export default Homepage;
