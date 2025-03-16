@@ -142,7 +142,7 @@ function Feedback({ feedbacks }) {
 
   return (
     <div className="w-full h-full overflow-hidden">
-      <div className="w-full h-full bg-[#D9D9D9] rounded-lg">
+      <div className="w-full h-full bg-white rounded-lg">
         <DataTable
           className="font-inter h-full overflow-hidden rounded-lg text-[#2f2f2f]"
           columns={columns}

@@ -287,7 +287,7 @@ function Homepage() {
   ];
 
   return (
-    <div className="w-full h-screen flex flex-row font-inter text-[#F2F2F2] overflow-hidden">
+    <div className="w-full h-screen bg-white flex flex-row font-inter text-[#F2F2F2] overflow-hidden">
       <Sidebar screens={screens} screen={screen} setScreen={setScreen} />
       <div className="flex-1 h-full flex flex-col p-4 gap-4">
         <Navbar

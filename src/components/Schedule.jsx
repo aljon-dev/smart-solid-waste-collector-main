@@ -20,6 +20,8 @@ function Schedule({ schedules, isAddSched, close, locations }) {
   const [localSchedules, setLocalSchedules] = useState(schedules?.data || []);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState(null);
 
   useEffect(() => {
     if (schedules?.data) {
@@ -31,17 +33,32 @@ function Schedule({ schedules, isAddSched, close, locations }) {
     }
   }, [schedules]);
 
-  const handleDelete = async (scheduleId) => {
-    if (!scheduleId) {
+  const openConfirmDelete = (scheduleId, e) => {
+    e.stopPropagation(); // Prevent row click event
+    setScheduleToDelete(scheduleId);
+    setConfirmDeleteDialog(true);
+  };
+
+  const closeConfirmDelete = () => {
+    setScheduleToDelete(null);
+    setConfirmDeleteDialog(false);
+  };
+
+  const handleDelete = async () => {
+    if (!scheduleToDelete) {
       console.error("No schedule ID provided");
       return;
     }
+    
     try {
       setIsDeleting(true);
-      await deleteSchedule(scheduleId);
 
+      // Call the deleteSchedule API
+      await deleteSchedule([scheduleToDelete]); // Pass the schedule ID as an array
+
+      // Remove the deleted schedule from the local state
       setLocalSchedules((prevSchedules) =>
-        prevSchedules.filter((schedule) => schedule.id !== scheduleId)
+        prevSchedules.filter((schedule) => schedule.id !== scheduleToDelete)
       );
 
       dispatch(
@@ -53,11 +70,9 @@ function Schedule({ schedules, isAddSched, close, locations }) {
         })
       );
 
-      if (typeof close === "function") {
-        close();
-      }
+      closeConfirmDelete();
     } catch (error) {
-      console.error("Delete Error", error);
+      console.error("Delete Error:", error);
       dispatch(
         show({
           message: "Failed to delete schedule. Please try again.",
@@ -90,7 +105,7 @@ function Schedule({ schedules, isAddSched, close, locations }) {
     try {
       console.log("Updating Schedule:", selectedSchedule);
   
-      // Call the API to update the schedule, passing the ID and updated data
+    
       await updateSchedule(selectedSchedule.id, {
         note: selectedSchedule.note,
         barangay: selectedSchedule.barangay,
@@ -99,7 +114,7 @@ function Schedule({ schedules, isAddSched, close, locations }) {
         timeT: selectedSchedule.timeT,
       });
   
-      // Update local state with the updated schedule
+      
       setLocalSchedules((prevSchedules) =>
         prevSchedules.map((sched) =>
           sched.id === selectedSchedule.id ? selectedSchedule : sched
@@ -129,7 +144,11 @@ function Schedule({ schedules, isAddSched, close, locations }) {
     }
   };
 
-  
+
+  const validateInput = (value) => {
+    const regex = /^[a-zA-Z0-9]*$/; 
+    return regex.test(value);
+  };
 
   return (
     <div className="w-full">
@@ -172,18 +191,19 @@ function Schedule({ schedules, isAddSched, close, locations }) {
                   </div>
                 </td>
                 <td className="px-4 py-3 flex flex-row">
-          
-              
-
-
-
                   <Button
                     variant="text"
-                    startIcon={<Delete />}
+                    startIcon={<Edit />}
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent row click event
-                      handleDelete(schedule.id);
+                      e.stopPropagation();
+                      handleRowClick(schedule);
                     }}
+                  />
+                  <Button
+                    variant="text"
+                    color="error"
+                    startIcon={<Delete />}
+                    onClick={(e) => openConfirmDelete(schedule.id, e)}
                     disabled={isDelete}
                   />
                 </td>
@@ -193,7 +213,7 @@ function Schedule({ schedules, isAddSched, close, locations }) {
         </table>
       </div>
 
-      {/* Dialog for viewing and editing schedule */}
+    
       {selectedSchedule && (
         <Dialog open={dialogOpen} onClose={handleDialogClose}>
           <DialogTitle>Edit Schedule</DialogTitle>
@@ -202,62 +222,63 @@ function Schedule({ schedules, isAddSched, close, locations }) {
               label="Note"
               fullWidth
               value={selectedSchedule.note}
-              onChange={(e) =>
-                setSelectedSchedule({ ...selectedSchedule, note: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                if (validateInput(value)) {
+                  setSelectedSchedule({ ...selectedSchedule, note: value });
+                }
+              }}
               margin="normal"
             />
             <TextField
               label="Area"
               fullWidth
               value={selectedSchedule.barangay}
-              onChange={(e) =>
-                setSelectedSchedule({ ...selectedSchedule, barangay: e.target.value })
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                if (validateInput(value)) {
+                  setSelectedSchedule({ ...selectedSchedule, barangay: value });
+                }
+              }}
               margin="normal"
             />
 
-         <div className="flex   flex-row gap-3"> 
-
-
-         <TextField
-              label="Time From"
-              type="time"
-              value={selectedSchedule.timeF}
-              onChange={(e) =>
-                setSelectedSchedule({ ...selectedSchedule, timeF: e.target.value })
-              }
-              margin="normal"
-            />
-            <TextField
-              label="Time To"
-              type="time"
-              value={selectedSchedule.timeT}
-              onChange={(e) =>
-                setSelectedSchedule({ ...selectedSchedule, timeT: e.target.value })
-              }
-              margin="normal"
-            />
+            <div className="flex flex-row gap-3"> 
+              <TextField
+                label="Time From"
+                type="time"
+                value={selectedSchedule.timeF}
+                onChange={(e) =>
+                  setSelectedSchedule({ ...selectedSchedule, timeF: e.target.value })
+                }
+                margin="normal"
+              />
+              <TextField
+                label="Time To"
+                type="time"
+                value={selectedSchedule.timeT}
+                onChange={(e) =>
+                  setSelectedSchedule({ ...selectedSchedule, timeT: e.target.value })
+                }
+                margin="normal"
+              />
          
-        <select
-        name="day"
-        value={selectedSchedule.day} 
-        onChange={(e) =>
-        setSelectedSchedule({ ...selectedSchedule, day: e.target.value })}
-        className="form-select" >                 
-        <option value="">Select Day</option>
-        <option value="Monday">Monday</option>
-        <option value="Tuesday">Tuesday</option>
-        <option value="Wednesday">Wednesday</option>
-        <option value="Thursday">Thursday</option>
-        <option value="Friday">Friday</option>
-        <option value="Saturday">Saturday</option>
-        <option value="Sunday">Sunday</option>
-        </select>
-
-        
-        </div>  
-            
+              <select
+                name="day"
+                value={selectedSchedule.day} 
+                onChange={(e) =>
+                  setSelectedSchedule({ ...selectedSchedule, day: e.target.value })}
+                className="form-select mt-4 p-2 border rounded-md">                 
+                <option value="">Select Day</option>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+              </select>
+            </div>  
           </DialogContent>
           <DialogActions>
             <Button onClick={handleDialogClose}>Cancel</Button>
@@ -267,6 +288,24 @@ function Schedule({ schedules, isAddSched, close, locations }) {
           </DialogActions>
         </Dialog>
       )}
+
+      
+      <Dialog open={confirmDeleteDialog} onClose={closeConfirmDelete}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this schedule? This action cannot be undone.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirmDelete}>Cancel</Button>
+          <Button 
+            onClick={handleDelete} 
+            color="error"
+            disabled={isDelete}
+          >
+            {isDelete ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
