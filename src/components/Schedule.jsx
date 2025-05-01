@@ -25,14 +25,23 @@ function Schedule({ schedules, isAddSched, close, locations }) {
 
   useEffect(() => {
     if (schedules?.data) {
-      const updatedSchedules = schedules.data.filter(
-        (newSched) =>
-          !localSchedules.some((localSched) => localSched.id === newSched.id)
-      );
+      const updatedSchedules = schedules.data
+        .filter(
+          (newSched) =>
+            !localSchedules.some((localSched) => localSched.id === newSched.id)
+        )
+        .sort((a, b) => {
+          // Convert "HH:MM" time strings to minutes for comparison
+          const timeToMinutes = (timeStr) => {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+          };
+          return timeToMinutes(a.timeF) - timeToMinutes(b.timeF);
+        });
+      
       setLocalSchedules((prevSchedules) => [...prevSchedules, ...updatedSchedules]);
     }
   }, [schedules]);
-
   const openConfirmDelete = (scheduleId, e) => {
     e.stopPropagation(); // Prevent row click event
     setScheduleToDelete(scheduleId);

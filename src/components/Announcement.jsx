@@ -35,13 +35,17 @@ function Announcement() {
   useEffect(() => {
     const ref = collection(db, "Announcements");
     const unsubscribe = onSnapshot(ref, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const data = snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        // Sort by timestamp (newest first)
+        .sort((a, b) => b.postedAt?.toDate() - a.postedAt?.toDate());
+      
       setAnnouncementsList(data);
     });
-
+  
     return () => unsubscribe();
   }, []);
 
